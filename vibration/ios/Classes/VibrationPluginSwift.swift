@@ -113,15 +113,20 @@ public class VibrationPluginSwift: NSObject, FlutterPlugin {
             print("Failed to play pattern: \(error.localizedDescription).")
         }
     }
-    @available(iOS 13.0, *)
+
     private func cancelVibration() {
-        VibrationPluginSwift.engine?.stop(completionHandler: { error in
-            if let error = error {
-                print("Error stopping haptic engine: \(error)")
-            } else {
-                print("Haptic engine stopped successfully.")
-            }
-        })
+        if #available(iOS 13.0, *) {
+            VibrationPluginSwift.engine?.stop(completionHandler: { error in
+                if let error = error {
+                    print("Error stopping haptic engine: \(error)")
+                } else {
+                    print("Haptic engine stopped successfully.")
+                }
+            })
+        } else {
+            // Stop system vibration for earlier iOS versions
+            AudioServicesRemoveSystemSoundCompletion(kSystemSoundID_Vibrate)
+        }
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -166,11 +171,7 @@ public class VibrationPluginSwift: NSObject, FlutterPlugin {
             
             result(isDevice)
         case "cancel":
-            if #available(iOS 13.0, *) {
-                cancelVibration()
-            } else {
-                result(false)
-            }
+            cancelVibration()
             result(true)
             return
         default:
